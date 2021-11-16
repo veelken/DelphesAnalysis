@@ -1,0 +1,12 @@
+<use   name="FWCore/ParameterSet"/>
+<use   name="FWCore/Utilities"/>
+<use   name="CommonTools/Utils"/>
+<use   name="DataFormats/Math"/>
+<use   name="tthAnalysis/HiggsToTauTau"/>
+<use   name="root"/>
+<use   name="roottmva"/>
+<use   name="boost" />
+<Flags CXXFLAGS="-O3 -fPIC -Wswitch -Wswitch-enum -Werror -Wshadow -Wno-reorder -Wno-error=bool-compare" />
+<export>
+  <lib   name="1"/>
+</export>
