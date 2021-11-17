@@ -1,9 +1,9 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesJetCollectionSelector.h"
 
 DelphesJetSelector::DelphesJetSelector(Era era, int index, bool debug)
-  : min_pt_(25.)
+  : debug_(debug)
+  , min_pt_(25.)
   , max_absEta_(2.4)
-  , debug_(debug)
 {}
 
 void

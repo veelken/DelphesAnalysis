@@ -132,6 +132,7 @@ int main(int argc, char* argv[])
   bool apply_genWeight = cfg_analyze.getParameter<bool>("apply_genWeight");
 
   bool isDEBUG = cfg_analyze.getParameter<bool>("isDEBUG");
+  std::cout << " isDEBUG = " << isDEBUG << std::endl;
 
   fwlite::InputSource inputFiles(cfg);
   int maxEvents = inputFiles.maxEvents();
@@ -236,6 +237,10 @@ int main(int argc, char* argv[])
 
     const std::vector<const DelphesLepton*> selLeptonsFull = mergeLeptonCollections(selElectrons, selMuons, isHigherPt<DelphesLepton>);
     const std::vector<const DelphesLepton*> selLeptons = pickFirstNobjects(selLeptonsFull, 2);
+
+    //std::cout << "#leptons = " << (electrons.size() + muons.size()) << " (selected = " << selLeptons.size() << "):" << std::endl;
+    //std::cout << " #electrons = " << electrons.size() << " (selected = " << selElectrons.size() << ")" << std::endl;
+    //std::cout << " #muons = " << muons.size() << " (selected = " << selMuons.size() << ")" << std::endl;
 
 //--- build collections of jets
     const std::vector<DelphesJet> jets = jetReader->read();

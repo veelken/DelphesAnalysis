@@ -38,7 +38,7 @@ class DelphesJetReader : public ReaderBase
   void
   setBranchNames();
 
-  const unsigned int max_nJets_;
+  const int max_nJets_;
   std::string branchName_num_;
   std::string branchName_obj_;
 
@@ -53,7 +53,7 @@ class DelphesJetReader : public ReaderBase
   std::string branchName_flavorAlgo_;
   std::string branchName_flavorPhys_;
 
-  UInt_t nJets_;
+  Int_t nJets_;
   Float_t * pt_;
   Float_t * eta_;
   Float_t * phi_;

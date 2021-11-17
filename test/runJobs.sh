@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rm analyze_hh_bb2l_delphes_signal.log
+analyze_hh_bb2l_delphes analyze_hh_bb2l_delphes_signal_cfg.py >& analyze_hh_bb2l_delphes_signal.log
+
+rm analyze_hh_bb2l_delphes_background.log
+analyze_hh_bb2l_delphes analyze_hh_bb2l_delphes_background_cfg.py >& analyze_hh_bb2l_delphes_background.log
+
+rm analyze_hh_bb2l_delphes_all.root
+hadd analyze_hh_bb2l_delphes_all.root analyze_hh_bb2l_delphes_signal.root analyze_hh_bb2l_delphes_background.root

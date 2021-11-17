@@ -20,7 +20,7 @@ DelphesEventInfo::luminosityBlock() const
   return luminosityBlock_;
 }
 
-ULong64_t 
+Long64_t 
 DelphesEventInfo::event() const
 {
   return event_;

@@ -71,6 +71,7 @@ DelphesLeptonReader::setBranchNames()
     branchName_sumPtCh_       = Form("%s_%s", branchName_obj_.data(), "sumPtCh");
     branchName_sumPtNeu_      = Form("%s_%s", branchName_obj_.data(), "sumPtNeu");
     branchName_sumPtCPU_      = Form("%s_%s", branchName_obj_.data(), "sumPtCPU");
+    instances_[branchName_obj_] = this;
   }
   else
   {
@@ -119,7 +120,7 @@ DelphesLeptonReader::read() const
   assert(gInstance);
 
   std::vector<DelphesLepton> leptons;
-  const UInt_t nLeptons = gInstance->nLeptons_;
+  const Int_t nLeptons = gInstance->nLeptons_;
   if(nLeptons > max_nLeptons_)
   {
     throw cmsException(this)
@@ -130,7 +131,7 @@ DelphesLeptonReader::read() const
   if(nLeptons > 0)
   {
     leptons.reserve(nLeptons);
-    for(UInt_t idxLepton = 0; idxLepton < nLeptons; ++idxLepton)
+    for(Int_t idxLepton = 0; idxLepton < nLeptons; ++idxLepton)
     {
       leptons.push_back({
         {

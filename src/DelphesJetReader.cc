@@ -65,6 +65,7 @@ DelphesJetReader::setBranchNames()
     branchName_flavor_     = Form("%s_%s", branchName_obj_.data(), "flavor");
     branchName_flavorAlgo_ = Form("%s_%s", branchName_obj_.data(), "flavorAlgo");
     branchName_flavorPhys_ = Form("%s_%s", branchName_obj_.data(), "flavorPhys");
+    instances_[branchName_obj_] = this;
   }
   else
   {
@@ -111,7 +112,7 @@ DelphesJetReader::read() const
   assert(gInstance);
 
   std::vector<DelphesJet> jets;
-  const UInt_t nJets = gInstance->nJets_;
+  const Int_t nJets = gInstance->nJets_;
   if(nJets > max_nJets_)
   {
     throw cmsException(this)
@@ -122,7 +123,7 @@ DelphesJetReader::read() const
   if(nJets > 0)
   {
     jets.reserve(nJets);
-    for(UInt_t idxJet = 0; idxJet < nJets; ++idxJet)
+    for(Int_t idxJet = 0; idxJet < nJets; ++idxJet)
     {
       jets.push_back({
         {

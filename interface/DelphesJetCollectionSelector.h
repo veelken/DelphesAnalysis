@@ -32,9 +32,10 @@ class DelphesJetSelector
   operator()(const DelphesJet & jet) const;
 
 protected:
+  bool debug_;
+
   Float_t min_pt_;     ///< lower cut threshold on pT
   Float_t max_absEta_; ///< upper cut threshold on absolute value of eta
-  bool debug_;
 };
 
 typedef ParticleCollectionSelector<DelphesJet, DelphesJetSelector> DelphesJetCollectionSelector;

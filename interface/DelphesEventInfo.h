@@ -1,7 +1,7 @@
 #ifndef hhAnalysis_DelphesAnalysis_DelphesEventInfo_h
 #define hhAnalysis_DelphesAnalysis_DelphesEventInfo_h
 
-#include <Rtypes.h> // Int_t, ULong64_t, Float_t
+#include <Rtypes.h> // Int_t, Long64_t, Float_t
 
 #include <iostream> // std::ostream
 
@@ -13,7 +13,7 @@ class DelphesEventInfo
 
   Int_t run() const;
   Int_t luminosityBlock() const;
-  ULong64_t event() const;
+  Long64_t event() const;
   Float_t scale() const;
   Float_t x1() const;
   Float_t x2() const;
@@ -30,7 +30,7 @@ class DelphesEventInfo
  protected:
   Int_t     run_;             ///< run number
   Int_t     luminosityBlock_; ///< luminosity section
-  ULong64_t event_;           ///< event number
+  Long64_t  event_;           ///< event number
   Float_t   scale_;           ///< renormalization scale
   Float_t   x1_;              ///< Bjorken x for first proton
   Float_t   x2_;              ///< Bjorken x for second proton

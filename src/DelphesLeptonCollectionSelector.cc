@@ -1,7 +1,8 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesLeptonCollectionSelector.h"
 
 DelphesLeptonSelector::DelphesLeptonSelector(Era era, int index, bool debug)
-  : min_pt_(7.)
+  : debug_(debug)
+  , min_pt_(7.)
   , max_absEta_(2.5)
   , max_relIsoRhoCorr_(0.10)
 {}

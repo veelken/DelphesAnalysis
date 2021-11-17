@@ -38,7 +38,7 @@ class DelphesLeptonReader : public ReaderBase
   void
   setBranchNames();
 
-  const unsigned int max_nLeptons_;
+  const int max_nLeptons_;
   std::string branchName_num_;
   std::string branchName_obj_;
 
@@ -55,7 +55,7 @@ class DelphesLeptonReader : public ReaderBase
   std::string branchName_sumPtNeu_;
   std::string branchName_sumPtCPU_;
 
-  UInt_t nLeptons_;
+  Int_t nLeptons_;
   Float_t * pt_;
   Float_t * eta_;
   Float_t * phi_;
