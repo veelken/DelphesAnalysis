@@ -58,6 +58,8 @@ void dump_hh_bb2l_delphes()
   std::vector<std::string> histogramNames_jetEnRes;
   histogramNames_jetEnRes.push_back("jetEnRes_b");
   histogramNames_jetEnRes.push_back("jetEnRes_udsg");
+  histogramNames_jetEnRes.push_back("jetPtRes_b");
+  histogramNames_jetEnRes.push_back("jetPtRes_udsg");
 
   std::vector<std::string> histogramNames_metRes;
   histogramNames_metRes.push_back("metResPx");

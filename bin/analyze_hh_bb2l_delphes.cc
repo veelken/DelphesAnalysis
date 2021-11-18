@@ -197,7 +197,9 @@ int main(int argc, char* argv[])
   double ptBinning[numPtBins + 1] = { 20., 25., 30., 35., 40., 50., 60., 80., 100., 120., 150., 200., 250. };
   TH2* histogram_jetEnRes_b    = fs.make<TH2D>("jetEnRes_b",    "jetEnRes_b",    numPtBins, ptBinning, 200, -5., +5.);
   TH2* histogram_jetEnRes_udsg = fs.make<TH2D>("jetEnRes_udsg", "jetEnRes_udsg", numPtBins, ptBinning, 200, -5., +5.);
-
+  TH2* histogram_jetPtRes_b    = fs.make<TH2D>("jetPtRes_b",    "jetPtRes_b",    numPtBins, ptBinning, 200, -5., +5.);
+  TH2* histogram_jetPtRes_udsg = fs.make<TH2D>("jetPtRes_udsg", "jetPtRes_udsg", numPtBins, ptBinning, 200, -5., +5.);
+  
   TH1* histogram_metResPx = fs.make<TH1D>("metResPx", "metResPx", 200, -100., +100.);
   TH1* histogram_metResPy = fs.make<TH1D>("metResPy", "metResPy", 200, -100., +100.);
 
@@ -413,19 +415,32 @@ int main(int argc, char* argv[])
       }
       if ( genJet_bestMatch )
       {
-        TH2* histogram_jetEnRes = nullptr;
         bool isGenJet_b    =  std::abs((*selJet)->flavor()) == 5;
         bool isGenJet_udsg = (std::abs((*selJet)->flavor()) >= 1 && std::abs((*selJet)->flavor()) <= 3) || (*selJet)->flavor() == 21;
+        TH2* histogram_jetEnRes = nullptr;
         if      ( isGenJet_b    ) histogram_jetEnRes = histogram_jetEnRes_b;
         else if ( isGenJet_udsg ) histogram_jetEnRes = histogram_jetEnRes_udsg;
         if ( histogram_jetEnRes )
         {
-          float jetEnRes = ((*selJet)->pt() - genJet_bestMatch->pt())/sqrt(std::max((float)1., genJet_bestMatch->pt()));
-          //std::cout << "pT(rec) = " << (*selJet)->pt() << ", pT(gen) = " << genJet_bestMatch->pt() << ":" 
+          float jetEnRes = ((*selJet)->p4().energy() - genJet_bestMatch->p4().energy())/sqrt(std::max((double)1., genJet_bestMatch->p4().energy()));
+          //std::cout << "E(rec) = " << (*selJet)->p4().energy() << ", E(gen) = " << genJet_bestMatch->p4().energy() << ":" 
           //          << " jetEnRes = " << jetEnRes << " (dR = " << dR_bestMatch << ")" << std::endl;
-          if ( genJet_bestMatch->pt() > 20. && genJet_bestMatch->pt() < 250. && std::fabs(jetEnRes) < 5. ) 
+          if ( genJet_bestMatch->p4().energy() > 20. && genJet_bestMatch->p4().energy() < 250. && std::fabs(jetEnRes) < 5. ) 
           {
-            histogram_jetEnRes->Fill(genJet_bestMatch->pt(), jetEnRes, evtWeight);
+            histogram_jetEnRes->Fill(genJet_bestMatch->p4().energy(), jetEnRes, evtWeight);
+          }
+        }
+        TH2* histogram_jetPtRes = nullptr;
+        if      ( isGenJet_b    ) histogram_jetPtRes = histogram_jetPtRes_b;
+        else if ( isGenJet_udsg ) histogram_jetPtRes = histogram_jetPtRes_udsg;
+        if ( histogram_jetPtRes )
+        {
+          float jetPtRes = ((*selJet)->pt() - genJet_bestMatch->pt())/sqrt(std::max((float)1., genJet_bestMatch->pt()));
+          //std::cout << "pT(rec) = " << (*selJet)->pt() << ", pT(gen) = " << genJet_bestMatch->pt() << ":" 
+          //          << " jetPtRes = " << jetPtRes << " (dR = " << dR_bestMatch << ")" << std::endl;
+          if ( genJet_bestMatch->pt() > 20. && genJet_bestMatch->pt() < 250. && std::fabs(jetPtRes) < 5. ) 
+          {
+            histogram_jetPtRes->Fill(genJet_bestMatch->pt(), jetPtRes, evtWeight);
           }
         }
       }
