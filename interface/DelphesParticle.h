@@ -10,8 +10,8 @@ class DelphesParticle
   typedef math::PtEtaPhiMLorentzVector LorentzVector;
 
   DelphesParticle();
-  DelphesParticle(Float_t pt, Float_t eta, Float_t phi, Float_t mass);
-  DelphesParticle(const DelphesParticle::LorentzVector & p4);
+  DelphesParticle(Int_t idx, Float_t pt, Float_t eta, Float_t phi, Float_t mass);
+  DelphesParticle(Int_t idx, const DelphesParticle::LorentzVector & p4);
 
   virtual ~DelphesParticle() {}
 
@@ -19,6 +19,7 @@ class DelphesParticle
    * @brief Funtions to access data-members
    * @return Values of data-members
    */
+  Int_t   idx() const;
   Float_t pt() const;
   Float_t eta() const;
   Float_t phi() const;
@@ -28,6 +29,7 @@ class DelphesParticle
   const LorentzVector & p4() const;
 
 protected:
+  Int_t   idx_;      ///< index of the particle in the Delphes Ntuple
   Float_t pt_;       ///< pT of the particle
   Float_t eta_;      ///< eta of the particle
   Float_t phi_;      ///< phi of the particle

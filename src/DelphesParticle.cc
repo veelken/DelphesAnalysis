@@ -3,11 +3,12 @@
 #include <cmath> // std::fabs()
 
 DelphesParticle::DelphesParticle()
-  : DelphesParticle(0., 0., 0., 0.)
+  : DelphesParticle(-1, 0., 0., 0., 0.)
 {}
 
-DelphesParticle::DelphesParticle(Float_t pt, Float_t eta, Float_t phi, Float_t mass)
-  : pt_(pt)
+DelphesParticle::DelphesParticle(Int_t idx, Float_t pt, Float_t eta, Float_t phi, Float_t mass)
+  : idx_(idx)
+  , pt_(pt)
   , eta_(eta)
   , phi_(phi)
   , mass_(mass)
@@ -15,14 +16,21 @@ DelphesParticle::DelphesParticle(Float_t pt, Float_t eta, Float_t phi, Float_t m
   , p4_{pt_, eta_, phi_, mass_}
 {}
 
-DelphesParticle::DelphesParticle(const DelphesParticle::LorentzVector & p4)
-  : pt_(p4.pt())
+DelphesParticle::DelphesParticle(Int_t idx, const DelphesParticle::LorentzVector & p4)
+  : idx_(idx)
+  , pt_(p4.pt())
   , eta_(p4.eta())
   , phi_(p4.phi())
   , mass_(p4.mass())
   , absEta_(std::fabs(eta_))
   , p4_(p4)
 {}
+
+Int_t
+DelphesParticle::idx() const
+{
+  return idx_;
+}
 
 Float_t
 DelphesParticle::pt() const

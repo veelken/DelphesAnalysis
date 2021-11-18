@@ -15,7 +15,7 @@ class DelphesLeptonReader : public ReaderBase
 {
  public:
   DelphesLeptonReader();
-  DelphesLeptonReader(const std::string & branchName_obj);
+  DelphesLeptonReader(DelphesLepton::Type type, const std::string & branchName_obj);
   ~DelphesLeptonReader();
 
   /**
@@ -41,6 +41,7 @@ class DelphesLeptonReader : public ReaderBase
   const int max_nLeptons_;
   std::string branchName_num_;
   std::string branchName_obj_;
+  DelphesLepton::Type type_;
 
   std::string branchName_pt_;
   std::string branchName_eta_;

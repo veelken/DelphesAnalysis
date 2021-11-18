@@ -59,8 +59,9 @@ std::ostream &
 operator<<(std::ostream & stream,
            const DelphesJet & jet)
 {
-  stream << static_cast<const DelphesParticle &>(jet) << ",\n"
-            " btag = "   << jet.btag()   << ","
-            " flavor = " << jet.flavor() << "\n";
+  stream << "Jet #" << jet.idx() << ":"
+         << " " << static_cast<const DelphesParticle &>(jet) << ",\n"
+         << " btag = "   << jet.btag()   << ","
+         << " flavor = " << jet.flavor() << "\n";
   return stream;
 }

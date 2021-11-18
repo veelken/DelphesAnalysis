@@ -7,13 +7,14 @@ std::map<std::string, int> DelphesLeptonReader::numInstances_;
 std::map<std::string, DelphesLeptonReader *> DelphesLeptonReader::instances_;
 
 DelphesLeptonReader::DelphesLeptonReader()
-  : DelphesLeptonReader("Lepton")
+  : DelphesLeptonReader(DelphesLepton::kUndefined, "Lepton")
 {}
 
-DelphesLeptonReader::DelphesLeptonReader(const std::string & branchName_obj)
+DelphesLeptonReader::DelphesLeptonReader(DelphesLepton::Type type, const std::string & branchName_obj)
   : max_nLeptons_(64)
   , branchName_num_(Form("n%s", branchName_obj.data()))
   , branchName_obj_(branchName_obj)
+  , type_(type)
   , pt_(nullptr)
   , eta_(nullptr)
   , phi_(nullptr)
@@ -134,12 +135,14 @@ DelphesLeptonReader::read() const
     for(Int_t idxLepton = 0; idxLepton < nLeptons; ++idxLepton)
     {
       leptons.push_back({
-        {
+        { 
+          idxLepton,
           pt_[idxLepton],
           eta_[idxLepton],
           phi_[idxLepton],
           mass_[idxLepton],
         },
+        type_,
         charge_[idxLepton],
         dz_[idxLepton],
         relIso_[idxLepton],

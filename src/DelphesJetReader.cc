@@ -127,6 +127,7 @@ DelphesJetReader::read() const
     {
       jets.push_back({
         {
+          idxJet,
           pt_[idxJet],
           eta_[idxJet],
           phi_[idxJet],

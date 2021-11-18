@@ -13,12 +13,9 @@
 #  include <FWCore/PythonParameterSet/interface/MakeParameterSets.h>  // edm::readPSetsFrom()
 #endif
 
-#include <TBenchmark.h>     // TBenchmark
-#include <TString.h>        // TString, Form
-#include <TError.h>         // gErrorAbortLevel, kError
-#include <TRandom3.h>       // TRandom3
-#include <TLorentzVector.h> // TLorentzVector 
-#include <TMatrixD.h>       // TMatrixD
+#include <TBenchmark.h> // TBenchmark
+#include <TH1.h>        // TH1D
+#include <TH2.h>        // TH2D
 
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesLepton.h"                   // DelphesLepton
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesLeptonReader.h"             // DelphesLeptonReader
@@ -32,6 +29,10 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesMEtReader.h"                // DelphesMEtReader
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesEventInfo.h"                // DelphesEventInfo
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesEventInfoReader.h"          // DelphesEventInfoReader
+#include "hhAnalysis/DelphesAnalysis/interface/DelphesGenParticle.h"              // DelphesGenParticle
+#include "hhAnalysis/DelphesAnalysis/interface/DelphesGenParticleReader.h"        // DelphesGenParticleReader
+#include "hhAnalysis/DelphesAnalysis/interface/DelphesGenJet.h"                   // DelphesGenJet
+#include "hhAnalysis/DelphesAnalysis/interface/DelphesGenJetReader.h"             // DelphesGenJetReader
 
 #include "tthAnalysis/HiggsToTauTau/interface/TTreeWrapper.h"                     // TTreeWrapper
 #include "tthAnalysis/HiggsToTauTau/interface/histogramAuxFunctions.h"            // fillWithOverFlow
@@ -47,6 +48,7 @@
 #include <cstdlib>  // EXIT_SUCCESS, EXIT_FAILURE
 #include <fstream>  // std::ofstream
 #include <assert.h> // assert
+#include <math.h>   // sqrt 
 
 template <typename T>
 bool
@@ -118,7 +120,7 @@ int main(int argc, char* argv[])
   std::string treeName = cfg_analyze.getParameter<std::string>("treeName");
 
   std::string process_string = cfg_analyze.getParameter<std::string>("process");
-  //bool isSignal = ( process_string.find("signal") != std::string::npos ) ? true : false;
+  bool isSignal = ( process_string.find("signal") != std::string::npos ) ? true : false;
 
   std::string histogramDir = cfg_analyze.getParameter<std::string>("histogramDir");
 
@@ -127,6 +129,8 @@ int main(int argc, char* argv[])
   std::string branchName_jets = cfg_analyze.getParameter<std::string>("branchName_jets");
   std::string branchName_met = cfg_analyze.getParameter<std::string>("branchName_met");
 
+  std::string branchName_genParticles = cfg_analyze.getParameter<std::string>("branchName_genParticles");
+  std::string branchName_genJets = cfg_analyze.getParameter<std::string>("branchName_genJets");
   std::string branchName_genMEt = cfg_analyze.getParameter<std::string>("branchName_genMEt");
 
   bool apply_genWeight = cfg_analyze.getParameter<bool>("apply_genWeight");
@@ -151,14 +155,14 @@ int main(int argc, char* argv[])
   inputTree->registerReader(&eventInfoReader);
 
 //--- declare collections of reconstructed particles
-  DelphesLeptonReader* muonReader = new DelphesLeptonReader(branchName_muons);
+  DelphesLeptonReader* muonReader = new DelphesLeptonReader(DelphesLepton::kMuon, branchName_muons);
   inputTree->registerReader(muonReader);
   DelphesLeptonCollectionSelector muonSelector(Era::kUndefined, -1, isDEBUG);
   muonSelector.getSelector().set_min_pt(5.);
   muonSelector.getSelector().set_max_absEta(2.4);
   muonSelector.getSelector().set_max_relIsoRhoCorr(0.10);
 
-  DelphesLeptonReader* electronReader = new DelphesLeptonReader(branchName_electrons);
+  DelphesLeptonReader* electronReader = new DelphesLeptonReader(DelphesLepton::kElectron, branchName_electrons);
   inputTree->registerReader(electronReader);
   DelphesLeptonCollectionCleaner electronCleaner(0.3, isDEBUG);
   DelphesLeptonCollectionSelector electronSelector(Era::kUndefined, -1, isDEBUG);
@@ -174,6 +178,12 @@ int main(int argc, char* argv[])
   DelphesMEtReader* metReader = new DelphesMEtReader(branchName_met);
   inputTree->registerReader(metReader);
 
+  DelphesGenParticleReader* genParticleReader = new DelphesGenParticleReader(branchName_genParticles);
+  inputTree->registerReader(genParticleReader);
+
+  DelphesGenJetReader* genJetReader = new DelphesGenJetReader(branchName_genJets);
+  inputTree->registerReader(genJetReader);
+
   DelphesMEtReader* genMEtReader = new DelphesMEtReader(branchName_genMEt);
   inputTree->registerReader(genMEtReader);
 
@@ -182,6 +192,11 @@ int main(int argc, char* argv[])
 //    for different b-tagging cuts applied on the reconstructed b-jets
   TH1* histogram_numGenBJets_geq1BJet  = fs.make<TH1D>("numGenBJets_geq1BJet",  "numGenBJets_geq1BJet",  4, -0.5, +3.5);
   TH1* histogram_numGenBJets_geq2BJets = fs.make<TH1D>("numGenBJets_geq2BJets", "numGenBJets_geq2BJets", 4, -0.5, +3.5);
+
+  const int numPtBins = 12;
+  double ptBinning[numPtBins + 1] = { 20., 25., 30., 35., 40., 50., 60., 80., 100., 120., 150., 200., 250. };
+  TH2* histogram_jetEnRes_b    = fs.make<TH2D>("jetEnRes_b",    "jetEnRes_b",    numPtBins, ptBinning, 200, -5., +5.);
+  TH2* histogram_jetEnRes_udsg = fs.make<TH2D>("jetEnRes_udsg", "jetEnRes_udsg", numPtBins, ptBinning, 200, -5., +5.);
 
   TH1* histogram_metResPx = fs.make<TH1D>("metResPx", "metResPx", 200, -100., +100.);
   TH1* histogram_metResPy = fs.make<TH1D>("metResPy", "metResPy", 200, -100., +100.);
@@ -196,10 +211,11 @@ int main(int argc, char* argv[])
     process_string, Form("%s/sel/cutFlow", histogramDir.data()), "", "central"
   );
   const std::vector<std::string> cuts = {
+    "gen. Z-veto (signal only)",
     ">= 2 selected leptons",
     "lead lepton pT > 25 GeV && sublead lepton pT > 15 GeV",
     "lepton-pair OS charge",
-    ">= 2 jets from H->bb",
+    ">= 2 jets",
     ">= 1 b-jet",
     "m(ll) > 12 GeV",
   };
@@ -249,6 +265,31 @@ int main(int argc, char* argv[])
     ;
     const std::vector<const DelphesJet*> selJets = jetSelector(cleanedJets, isBetterBJet);
 
+    // CV: remove HH->bbZZ events (keep only HH->bbWW events)
+    std::vector<DelphesGenParticle> genParticles = genParticleReader->read();
+    const std::vector<const DelphesGenParticle*> genParticles_ptrs = convert_to_ptrs(genParticles);
+    bool failsGenZVeto = false;
+    if ( isSignal )
+    {
+      for ( std::vector<const DelphesGenParticle*>::const_iterator genParticle = genParticles_ptrs.begin();
+            genParticle != genParticles_ptrs.end(); ++genParticle ) {
+        if ( (*genParticle)->pdgId() == 23 )
+        { 
+          failsGenZVeto = true;
+          break;
+        }
+      }
+    }
+    if ( failsGenZVeto ) {
+      if ( isDEBUG ) {
+        std::cout << "event " << eventInfo.str() << " FAILS generator-level Z-veto." << std::endl;
+        printCollection("genParticles", genParticles_ptrs);
+      }
+      continue;
+    }
+    cutFlowTable.update("gen. Z-veto (signal only)", evtWeight);
+    cutFlowHistManager->fillHistograms("gen. Z-veto (signal only)", evtWeight);
+
     // require at least two leptons passing fakeable selection criteria
     if ( !(selLeptons.size() >= 2) ) {
       if ( isDEBUG ) {
@@ -291,12 +332,12 @@ int main(int argc, char* argv[])
     const DelphesJet* selJet2_Hbb = ( selJets.size() >= 2 ) ? selJets[1] : nullptr;
     if ( !(selJet1_Hbb && selJet2_Hbb) ) {
       if ( isDEBUG ) {
-        std::cout << "event " << eventInfo.str() << " FAILS >= 2 jets from H->bb selection\n";
+        std::cout << "event " << eventInfo.str() << " FAILS >= 2 jets selection\n";
       }
       continue;
     }
-    cutFlowTable.update(">= 2 jets from H->bb", evtWeight);
-    cutFlowHistManager->fillHistograms(">= 2 jets from H->bb", evtWeight);
+    cutFlowTable.update(">= 2 jets", evtWeight);
+    cutFlowHistManager->fillHistograms(">= 2 jets", evtWeight);
 
     int numBJets = 0;
     if ( selJet1_Hbb && selJet1_Hbb->btag() >= 1 ) ++numBJets;
@@ -336,6 +377,9 @@ int main(int argc, char* argv[])
     if ( selJet1_Hbb && std::abs(selJet1_Hbb->flavor()) == 5 ) ++numGenBJets;
     if ( selJet2_Hbb && std::abs(selJet2_Hbb->flavor()) == 5 ) ++numGenBJets;
 
+    std::vector<DelphesGenJet> genJets = genJetReader->read();
+    const std::vector<const DelphesGenJet*> genJets_ptrs = convert_to_ptrs(genJets);
+
     DelphesMEt met = metReader->read();
 
     DelphesMEt genMEt = genMEtReader->read();
@@ -347,6 +391,44 @@ int main(int argc, char* argv[])
     }
     if ( numBJets >= 2 ) {
       fillWithOverFlow(histogram_numGenBJets_geq2BJets, numGenBJets, evtWeight, evtWeightErr);
+    }
+
+    std::vector<const DelphesJet*> selJets_Hbb;
+    if ( selJet1_Hbb ) selJets_Hbb.push_back(selJet1_Hbb);
+    if ( selJet2_Hbb ) selJets_Hbb.push_back(selJet2_Hbb);
+    for ( std::vector<const DelphesJet*>::const_iterator selJet = selJets_Hbb.begin();
+          selJet != selJets_Hbb.end(); ++selJet ) {
+      const DelphesGenJet* genJet_bestMatch = nullptr;
+      double dR_bestMatch = 1.e+3;
+      for ( std::vector<const DelphesGenJet*>::const_iterator genJet = genJets_ptrs.begin();
+            genJet != genJets_ptrs.end(); ++genJet ) { 
+        double dR = deltaR((*selJet)->p4(), (*genJet)->p4());
+        // CV: require that jet directions agree within dR < 0.1 in order to match reconstructed to generator-level jets
+        const double dRmax = 0.1;
+        if ( dR < dRmax && dR < dR_bestMatch )
+        {
+          genJet_bestMatch = *genJet;
+          dR_bestMatch = dR;
+        }
+      }
+      if ( genJet_bestMatch )
+      {
+        TH2* histogram_jetEnRes = nullptr;
+        bool isGenJet_b    =  std::abs((*selJet)->flavor()) == 5;
+        bool isGenJet_udsg = (std::abs((*selJet)->flavor()) >= 1 && std::abs((*selJet)->flavor()) <= 3) || (*selJet)->flavor() == 21;
+        if      ( isGenJet_b    ) histogram_jetEnRes = histogram_jetEnRes_b;
+        else if ( isGenJet_udsg ) histogram_jetEnRes = histogram_jetEnRes_udsg;
+        if ( histogram_jetEnRes )
+        {
+          float jetEnRes = ((*selJet)->pt() - genJet_bestMatch->pt())/sqrt(std::max((float)1., genJet_bestMatch->pt()));
+          //std::cout << "pT(rec) = " << (*selJet)->pt() << ", pT(gen) = " << genJet_bestMatch->pt() << ":" 
+          //          << " jetEnRes = " << jetEnRes << " (dR = " << dR_bestMatch << ")" << std::endl;
+          if ( genJet_bestMatch->pt() > 20. && genJet_bestMatch->pt() < 250. && std::fabs(jetEnRes) < 5. ) 
+          {
+            histogram_jetEnRes->Fill(genJet_bestMatch->pt(), jetEnRes, evtWeight);
+          }
+        }
+      }
     }
 
     if ( numBJets == 2 && numGenBJets == 2 ) {
@@ -373,6 +455,8 @@ int main(int argc, char* argv[])
   delete electronReader;
   delete jetReader;
   delete metReader;
+  delete genParticleReader;
+  delete genJetReader;
   delete genMEtReader;
 
   delete inputTree;

@@ -1,6 +1,7 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesLepton.h"
 
 DelphesLepton::DelphesLepton(const DelphesParticle & particle,
+                             Type type,
                              Int_t charge,
                              Float_t dz,
                              Float_t relIso,
@@ -10,6 +11,7 @@ DelphesLepton::DelphesLepton(const DelphesParticle & particle,
                              Float_t sumPtNeu,
                              Float_t sumPtCPU)
   : DelphesParticle(particle)
+  , type_(type)
   , charge_(charge)
   , dz_(dz)
   , relIso_(relIso)
@@ -71,13 +73,29 @@ DelphesLepton::sumPtCPU() const
   return sumPtCPU_;
 }
 
+Bool_t
+DelphesLepton::is_electron() const
+{
+  return type_ == kElectron;
+}
+
+Bool_t
+DelphesLepton::is_muon() const
+{
+  return type_ == kMuon;
+}
+
 std::ostream &
 operator<<(std::ostream & stream,
            const DelphesLepton & lepton)
 {
-  stream << static_cast<const DelphesParticle &>(lepton) << ",\n"
-            " dz = "            << lepton.dz()            << ","
-            " relIso = "        << lepton.relIso()        << ","
-            " relIsoRhoCorr = " << lepton.relIsoRhoCorr() << "\n";
+  if      ( lepton.is_electron() ) stream << "Electron";
+  else if ( lepton.is_muon()     ) stream << "Muon";
+  else                             stream << "Lepton";
+  stream << " #" << lepton.idx() << ":"
+         << " " << static_cast<const DelphesParticle &>(lepton) << ",\n"
+         << " dz = "            << lepton.dz()            << ","
+         << " relIso = "        << lepton.relIso()        << ","
+         << " relIsoRhoCorr = " << lepton.relIsoRhoCorr() << "\n";
   return stream;
 }

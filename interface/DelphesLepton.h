@@ -6,8 +6,11 @@
 class DelphesLepton : public DelphesParticle
 {
  public:
+  enum Type { kUndefined, kElectron, kMuon };
+
   DelphesLepton() = default;
   DelphesLepton(const DelphesParticle & particle,
+                Type type,
                 Int_t charge,
                 Float_t dz,
                 Float_t relIso,
@@ -32,9 +35,13 @@ class DelphesLepton : public DelphesParticle
   Float_t sumPtNeu() const;
   Float_t sumPtCPU() const;
 
+  Bool_t is_electron() const;
+  Bool_t is_muon() const;
+
   friend class DelphesLeptonReader;
 
  protected:
+  Type    type_;
   Int_t   charge_;
   Float_t dz_;
   Float_t relIso_;

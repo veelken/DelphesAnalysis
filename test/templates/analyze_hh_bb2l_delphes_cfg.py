@@ -26,6 +26,8 @@ process.analyze_hh_bb2l_delphes = cms.PSet(
     branchName_jets = cms.string('Jet'),
     branchName_met = cms.string('MET'),
 
+    branchName_genParticles = cms.string('GenPart'),
+    branchName_genJets = cms.string('GenJet'),
     branchName_genMEt = cms.string('GenMET'),
 
     isDEBUG = cms.bool(False)

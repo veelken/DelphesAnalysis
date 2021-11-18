@@ -26,6 +26,8 @@ process.analyze_hh_bb2l_delphes = cms.PSet(
     branchName_jets = cms.string('Jet'),
     branchName_met = cms.string('MET'),
 
+    branchName_genParticles = cms.string('GenPart'),
+    branchName_genJets = cms.string('GenJet'),
     branchName_genMEt = cms.string('GenMET'),
 
     isDEBUG = cms.bool(False)
@@ -36,7 +38,7 @@ process.fwliteOutput.fileName = cms.string('analyze_hh_bb2l_delphes_signal.root'
 process.analyze_hh_bb2l_delphes.process = cms.string('signal')
 process.analyze_hh_bb2l_delphes.histogramDir = cms.string('signal')
 
-inputFilePath = "/hdfs/local/karl/DelphesNtuples/2016/HH_LO/0000/"
+inputFilePath = "/hdfs/local/karl/DelphesNtuples/2016/HH_DL_LO/0000/"
 
 import re
 inputFile_regex = r"tree_[a-zA-Z0-9-_]+.root"
