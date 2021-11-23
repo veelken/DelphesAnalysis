@@ -14,4 +14,22 @@
   <use   name="boost"/>
   <Flags CXXFLAGS="-g -Wshadow -Werror"/>
 </bin>
+<bin file="produceMEMNtuple_hh_bb2l_delphes.cc" name="produceMEMNtuple_hh_bb2l_delphes">
+  <use   name="FWCore/FWLite"/>
+  <use   name="FWCore/ParameterSet"/>
+  <use   name="FWCore/ParameterSetReader"/>
+  <use   name="FWCore/PythonParameterSet"/>
+  <use   name="FWCore/Utilities"/>
+  <use   name="DataFormats/FWLite"/>
+  <use   name="DataFormats/Math"/>
+  <use   name="PhysicsTools/FWLite"/>
+  <use   name="tthAnalysis/HiggsToTauTau"/>
+  <use   name="hhAnalysis/bbwwMEM"/>
+  <use   name="hhAnalysis/bbwwMEMPerformanceStudies"/>
+  <use   name="hhAnalysis/DelphesAnalysis"/>
+  <use   name="root"/>
+  <use   name="roottmva"/>
+  <use   name="boost"/>
+  <Flags CXXFLAGS="-g -Wshadow -Werror"/>
+</bin>
 
