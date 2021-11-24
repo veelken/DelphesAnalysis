@@ -20,7 +20,7 @@ process.fwliteOutput = cms.PSet(
     fileName = cms.string('')
 )
 
-process.analyze_hh_bbwwMEM_dilepton = cms.PSet(
+process.analyze_hh_bbwwMEM_dilepton_delphes = cms.PSet(
     treeName = cms.string('Events'),
 
     skipSelEvents = cms.int32(0),
@@ -45,6 +45,6 @@ process.analyze_hh_bbwwMEM_dilepton = cms.PSet(
 
 #--------------------------------------------------------------------------------
 # CV: parameter sets needed by analyzeConfig.py base-class
-process.analyze_hh_bbwwMEM_dilepton.leptonFakeRateWeight = cms.PSet()
-process.analyze_hh_bbwwMEM_dilepton.hhWeight_cfg = cms.PSet()
+process.analyze_hh_bbwwMEM_dilepton_delphes.leptonFakeRateWeight = cms.PSet()
+process.analyze_hh_bbwwMEM_dilepton_delphes.hhWeight_cfg = cms.PSet()
 #--------------------------------------------------------------------------------

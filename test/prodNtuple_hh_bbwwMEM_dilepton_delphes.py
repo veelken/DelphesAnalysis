@@ -5,7 +5,7 @@ from hhAnalysis.DelphesAnalysis.configs.prodNtupleConfig_hh_bbwwMEM_dilepton_del
 from tthAnalysis.HiggsToTauTau.jobTools import query_yes_no
 from tthAnalysis.HiggsToTauTau.runConfig import tthAnalyzeParser
 
-# E.g.: ./prodNtuple_hh_bbwwMEM_dilepton_delphes.py -e 2016 -v 2021Nov22v2
+# E.g.: ./prodNtuple_hh_bbwwMEM_dilepton_delphes.py -e 2016 -v 2021Nov24
 
 parser = tthAnalyzeParser()
 parser.add_use_home()
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     cfgFile_analyze     = "produceMEMNtuple_hh_bb2l_delphes_cfg.py",
     samples             = samples,
     ##max_jobs_per_sample = 1000, # CV: use for tests
-    max_jobs_per_sample = 5000, # CV: use when making plots for paper
+    max_jobs_per_sample = -1, # CV: use when making plots for paper (do not limit number of jobs, as the Delphes samples are small anyway)
     max_events_per_job  = 500,
     era                 = era,
     check_output_files  = check_output_files,

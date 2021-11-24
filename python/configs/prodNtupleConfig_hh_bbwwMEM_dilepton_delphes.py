@@ -130,7 +130,7 @@ class prodNtupleConfig_hh_bbwwMEM_dilepton_delphes(analyzeConfig):
         if (numEvents % self.max_events_per_job) > 0:
           numJobs += 1
         for jobId in range(numJobs):
-          if jobs_per_sample < self.max_jobs_per_sample:
+          if jobs_per_sample < self.max_jobs_per_sample or self.max_jobs_per_sample == -1:
             jobs[sample_name].append({
               'jobId'         : jobs_per_sample,
               'inputFileName' : inputFileName,

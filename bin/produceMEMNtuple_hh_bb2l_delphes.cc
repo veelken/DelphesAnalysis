@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 
   edm::ParameterSet cfg = edm::readPSetsFrom(argv[1])->getParameter<edm::ParameterSet>("process");
 
-  edm::ParameterSet cfg_analyze = cfg.getParameter<edm::ParameterSet>("analyze_hh_bbwwMEM_dilepton");
+  edm::ParameterSet cfg_analyze = cfg.getParameter<edm::ParameterSet>("analyze_hh_bbwwMEM_dilepton_delphes");
 
   std::string treeName = cfg_analyze.getParameter<std::string>("treeName");
 
