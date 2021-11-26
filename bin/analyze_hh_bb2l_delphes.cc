@@ -85,6 +85,60 @@ isBetterBJet(const DelphesJet * jet1, const DelphesJet * jet2)
   return jet1->pt() > jet2->pt();
 }
 
+template <typename T>
+void 
+dumpCollection(const std::vector<T>& particles)
+{
+  for ( typename std::vector<T>::const_iterator particle = particles.begin();
+        particle != particles.end(); ++particle ) {
+    std::cout << (*particle);
+  }
+}
+
+bool
+isGenBJetFromHiggsDecay(const DelphesJet& jet, const std::vector<DelphesGenParticle>& genParticles)
+{
+  int numGenParticles = genParticles.size();
+  for ( int idxGenParticle = 0; idxGenParticle < numGenParticles; ++idxGenParticle ) {
+    const DelphesGenParticle& genParticle = genParticles[idxGenParticle];
+    if ( std::abs(genParticle.pdgId()) == 5 ) {
+      int idxMother = genParticle.idxMother();
+      if ( idxMother >= 0 && idxMother < numGenParticles ) {
+        const DelphesGenParticle& mother = genParticles[idxMother];
+        if ( mother.pdgId() == 25 ) {
+          double dR = deltaR(jet.p4(), genParticle.p4());
+          if ( dR < 0.4) return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+void 
+dumpJetCollection(const std::vector<DelphesJet>& jets, const std::vector<DelphesGenParticle>& genParticles)
+{
+  for ( typename std::vector<DelphesJet>::const_iterator jet = jets.begin();
+        jet != jets.end(); ++jet ) {
+    std::cout << (*jet);
+    std::cout << "(isGenBJetFromHiggsDecay = " << isGenBJetFromHiggsDecay(*jet, genParticles) << ")" << std::endl;
+  }
+}
+
+template <typename T>
+void 
+dumpCollection_in_cone(const std::vector<T>& particles, const DelphesParticle::LorentzVector& p4, double dRmax = 0.4)
+{
+  for ( typename std::vector<T>::const_iterator particle = particles.begin();
+        particle != particles.end(); ++particle ) {
+    double dR = deltaR(particle->p4(), p4);
+    if ( dR < dRmax ) 
+    {
+      std::cout << (*particle);
+    }   
+  }
+}
+
 /**
  * @brief Check validity (with Delphes) of assumptions on detector performance that we make in HH->bbWW MEM paper
  */
@@ -203,6 +257,10 @@ int main(int argc, char* argv[])
   TH1* histogram_metResPx = fs.make<TH1D>("metResPx", "metResPx", 200, -100., +100.);
   TH1* histogram_metResPy = fs.make<TH1D>("metResPy", "metResPy", 200, -100., +100.);
 
+  TH1* histogram_mbb_geq1BJet  = fs.make<TH1D>("mbb_geq1BJet",  "mbb_geq1BJet",  100, 0., 500.);
+  TH1* histogram_mbb_geq2BJets = fs.make<TH1D>("mbb_geq2BJets", "mbb_geq2BJets", 100, 0., 500.);
+  TH1* histogram_mbb_2genBJets = fs.make<TH1D>("mbb_2genBJets", "mbb_2genBJets", 100, 0., 500.);
+
   int analyzedEntries = 0;
   int selectedEntries = 0;
   double selectedEntries_weighted = 0.;
@@ -241,14 +299,27 @@ int main(int argc, char* argv[])
     double evtWeight = 1.;
     if ( apply_genWeight ) evtWeight *= eventInfo.genweight();
 
-//--- build collections of electrons and muons
+//--- read generator-level information
+    std::vector<DelphesGenParticle> genParticles = genParticleReader->read();
+    if ( isDEBUG ) dumpCollection(genParticles);
+    const std::vector<const DelphesGenParticle*> genParticles_ptrs = convert_to_ptrs(genParticles);
+
+    std::vector<DelphesGenJet> genJets = genJetReader->read();
+    if ( isDEBUG ) dumpCollection(genJets);
+    const std::vector<const DelphesGenJet*> genJets_ptrs = convert_to_ptrs(genJets);
+
+    DelphesMEt genMEt = genMEtReader->read();
+
+//--- read collections of electrons and muons
 //    resolve overlaps in order of priority: muon, electron,
     const std::vector<DelphesLepton> muons = muonReader->read();
+    if ( isDEBUG ) dumpCollection(muons);
     const std::vector<const DelphesLepton*> muon_ptrs = convert_to_ptrs(muons);
     const std::vector<const DelphesLepton*> cleanedMuons = muon_ptrs; // CV: no cleaning needed for muons, as they have the highest priority in the overlap removal
     const std::vector<const DelphesLepton*> selMuons = muonSelector(cleanedMuons, isHigherPt<DelphesLepton>);
 
     const std::vector<DelphesLepton> electrons = electronReader->read();
+    if ( isDEBUG ) dumpCollection(electrons);
     const std::vector<const DelphesLepton*> electron_ptrs = convert_to_ptrs(electrons);
     const std::vector<const DelphesLepton*> cleanedElectrons = electronCleaner(electron_ptrs, selMuons);
     const std::vector<const DelphesLepton*> selElectrons = electronSelector(cleanedElectrons, isHigherPt<DelphesLepton>);
@@ -260,16 +331,18 @@ int main(int argc, char* argv[])
     //std::cout << " #electrons = " << electrons.size() << " (selected = " << selElectrons.size() << ")" << std::endl;
     //std::cout << " #muons = " << muons.size() << " (selected = " << selMuons.size() << ")" << std::endl;
 
-//--- build collections of jets
+//--- read collections of jets
     const std::vector<DelphesJet> jets = jetReader->read();
+    if ( isDEBUG ) dumpJetCollection(jets, genParticles);
     const std::vector<const DelphesJet*> jet_ptrs = convert_to_ptrs(jets);
     const std::vector<const DelphesJet*> cleanedJets = jetCleaner_dR04(jet_ptrs, selLeptons)
     ;
     const std::vector<const DelphesJet*> selJets = jetSelector(cleanedJets, isBetterBJet);
 
-    // CV: remove HH->bbZZ events (keep only HH->bbWW events)
-    std::vector<DelphesGenParticle> genParticles = genParticleReader->read();
-    const std::vector<const DelphesGenParticle*> genParticles_ptrs = convert_to_ptrs(genParticles);
+    DelphesMEt met = metReader->read();
+
+//--- apply event selection
+    // CV: remove HH->bbZZ events (keep only HH->bbWW events)    
     bool failsGenZVeto = false;
     if ( isSignal )
     {
@@ -379,13 +452,6 @@ int main(int argc, char* argv[])
     if ( selJet1_Hbb && std::abs(selJet1_Hbb->flavor()) == 5 ) ++numGenBJets;
     if ( selJet2_Hbb && std::abs(selJet2_Hbb->flavor()) == 5 ) ++numGenBJets;
 
-    std::vector<DelphesGenJet> genJets = genJetReader->read();
-    const std::vector<const DelphesGenJet*> genJets_ptrs = convert_to_ptrs(genJets);
-
-    DelphesMEt met = metReader->read();
-
-    DelphesMEt genMEt = genMEtReader->read();
-
     const double evtWeightErr = 0.;
  
     if ( numBJets >= 1 ) {
@@ -450,6 +516,24 @@ int main(int argc, char* argv[])
       fillWithOverFlow(histogram_metResPx, met.px() - genMEt.px(), evtWeight, evtWeightErr);
       fillWithOverFlow(histogram_metResPy, met.py() - genMEt.py(), evtWeight, evtWeightErr);
     }
+
+    double mbb = (selJet1_Hbb->p4() + selJet2_Hbb->p4()).mass();
+    if ( isDEBUG ) {
+      if ( numGenBJets == 2 && (mbb < 100. || mbb > 150.)      &&
+           isGenBJetFromHiggsDecay(*selJet1_Hbb, genParticles) &&
+           isGenBJetFromHiggsDecay(*selJet2_Hbb, genParticles) ) {
+        std::cout << "selJet1_Hbb: " << (*selJet1_Hbb);
+        dumpCollection_in_cone(genParticles, selJet1_Hbb->p4(), 0.4);
+        dumpCollection_in_cone(genJets, selJet1_Hbb->p4(), 0.4);
+        std::cout << "selJet2_Hbb: " << (*selJet2_Hbb);
+        dumpCollection_in_cone(genParticles, selJet2_Hbb->p4(), 0.4);
+        dumpCollection_in_cone(genJets, selJet2_Hbb->p4(), 0.4);
+        std::cout << "mbb = " << mbb << " --> CHECK !!" << std::endl;
+      }
+    }
+    if ( numBJets    >= 1 ) fillWithOverFlow(histogram_mbb_geq1BJet,  mbb, evtWeight, evtWeightErr);
+    if ( numBJets    >= 2 ) fillWithOverFlow(histogram_mbb_geq2BJets, mbb, evtWeight, evtWeightErr);
+    if ( numGenBJets == 2 ) fillWithOverFlow(histogram_mbb_2genBJets, mbb, evtWeight, evtWeightErr);
 
     ++selectedEntries;
     selectedEntries_weighted += evtWeight;
