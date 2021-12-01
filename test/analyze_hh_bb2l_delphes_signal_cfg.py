@@ -38,7 +38,7 @@ process.fwliteOutput.fileName = cms.string('analyze_hh_bb2l_delphes_signal.root'
 process.analyze_hh_bb2l_delphes.process = cms.string('signal')
 process.analyze_hh_bb2l_delphes.histogramDir = cms.string('signal')
 
-inputFilePath = "/hdfs/local/karl/DelphesNtuples/2016/HH_DL_LO/0000/"
+inputFilePath = "/hdfs/local/karl/DelphesNtuples/2016/HH_DL_LO_PU40/0000/"
 
 import re
 inputFile_regex = r"tree_[a-zA-Z0-9-_]+.root"

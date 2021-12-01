@@ -2,11 +2,9 @@
 #include <TFile.h>
 #include <TString.h>
 #include <TCanvas.h>
-#include <TTree.h>
-#include <TTreeFormula.h>
 #include <TH1.h>
 #include <TH2.h>
-#include <TGraph.h>
+#include <TF1.h>
 #include <TAxis.h>
 #include <TLegend.h>
 #include <TLegendEntry.h>
@@ -130,6 +128,7 @@ void showHistograms(double canvasSizeX, double canvasSizeY,
   xAxis->SetTitleOffset(xAxisOffset);
   xAxis->SetTitleSize(60);
   xAxis->SetTitleFont(43);
+  xAxis->SetRangeUser(50., 200.);
   //xAxis->SetLabelOffset(-0.01);
   xAxis->SetLabelSize(0.050);
   xAxis->SetLabelFont(42);
@@ -204,6 +203,48 @@ void showHistograms(double canvasSizeX, double canvasSizeY,
   delete canvas;
 }
 
+void dumpSignalEfficiency_and_BackgroundRate(TH1* histogram_signal, TH1* histogram_background)
+{
+  double xMin_fit =  50.;
+  double xMax_fit = 200.;
+
+  TAxis* xAxis = histogram_signal->GetXaxis();
+  xAxis->SetRangeUser(xMin_fit, xMax_fit);
+
+  double mean = histogram_signal->GetMean();
+  double rms = histogram_signal->GetRMS();
+
+  xAxis->SetRange(); // reset x-axis range
+
+  std::string fitFunctionFormula = "[0] + [1]*x + [2]*TMath::Gaus(x, [3], [4])";
+  std::string fitFunctionName = "fitFunction";
+  TF1* fitFunction = new TF1(fitFunctionName.data(), fitFunctionFormula.data(), xMin_fit, xMax_fit);
+  fitFunction->SetParameter(0, 0.);
+  fitFunction->SetParameter(1, 0.);
+  fitFunction->SetParameter(2, histogram_signal->Integral());
+  fitFunction->SetParameter(3, mean);
+  fitFunction->SetParameter(4, rms);
+  histogram_signal->Fit(fitFunction);
+
+  std::cout << "fitted Gaussian: mean = " << fitFunction->GetParameter(3) << ", rms = " << fitFunction->GetParameter(4) << std::endl;
+
+  for ( int numSigma = 1; numSigma <= 2; ++numSigma ) { 
+    double xMin_window = mean - numSigma*rms;
+    double xMax_window = mean + numSigma*rms;
+    double integral_signal_window = histogram_signal->Integral(histogram_signal->FindBin(xMin_window), histogram_signal->FindBin(xMax_window));
+    double integral_signal = histogram_signal->Integral(0, histogram_signal->GetNbinsX() + 1);
+    //std::cout << "signal: integral = " << integral_signal << ", within mass-window = " << integral_signal_window << std::endl;
+    double integral_background_window = histogram_background->Integral(histogram_background->FindBin(xMin_window), histogram_background->FindBin(xMax_window));
+    double integral_background = histogram_background->Integral(0, histogram_background->GetNbinsX() + 1);
+    //std::cout << "background: integral = " << integral_background << ", within mass-window = " << integral_background_window << std::endl;
+    std::cout << "results for " << numSigma << " sigma (" << xMin_window << " < mbb < " << xMax_window << "):" 
+              << " signal efficiency = " << integral_signal_window/integral_signal << ","
+              << " background rate = " << integral_background_window/integral_background << std::endl;
+  }
+
+  delete fitFunction;
+}
+
 void makePlotsForPaper_mbb()
 {
   gROOT->SetBatch(true);
@@ -214,18 +255,24 @@ void makePlotsForPaper_mbb()
   std::string inputFileName = "bbwwMEMPerformanceStudies/macros/histogramsForPaper.root";
   std::string inputFileName_delphes = "DelphesAnalysis/macros/histogramsForPaper_delphes.root";
 
-  std::string histogramName_mbb_unsmeared = "signal_lo_mbb_unsmeared";
-  std::string histogramName_mbb_smeared = "signal_lo_mbb_smeared";
-  std::string histogramName_mbb_delphes = "signal_lo_mbb_delphes";
-  
+  std::string histogramName_mbb_signal_unsmeared     = "signal_lo_mbb_unsmeared";
+  std::string histogramName_mbb_background_unsmeared = "background_lo_mbb_unsmeared";
+  std::string histogramName_mbb_signal_smeared       = "signal_lo_mbb_smeared";
+  std::string histogramName_mbb_background_smeared   = "background_lo_mbb_smeared";
+  std::string histogramName_mbb_signal_delphes       = "signal_lo_mbb_delphes";
+  std::string histogramName_mbb_background_delphes   = "background_lo_mbb_delphes";
+
   TFile* inputFile = openFile(inputFilePath, inputFileName);
-  TH1* histogram_mbb_unsmeared = loadHistogram(inputFile, histogramName_mbb_unsmeared);
-  TH1* histogram_mbb_smeared = loadHistogram(inputFile, histogramName_mbb_smeared);  
+  TH1* histogram_mbb_signal_unsmeared     = loadHistogram(inputFile, histogramName_mbb_signal_unsmeared);
+  TH1* histogram_mbb_background_unsmeared = loadHistogram(inputFile, histogramName_mbb_background_unsmeared);
+  TH1* histogram_mbb_signal_smeared       = loadHistogram(inputFile, histogramName_mbb_signal_smeared);  
+  TH1* histogram_mbb_background_smeared   = loadHistogram(inputFile, histogramName_mbb_background_smeared);
 
   TFile* inputFile_delphes = openFile(inputFilePath, inputFileName_delphes);
-  TH1* histogram_mbb_delphes = loadHistogram(inputFile_delphes, histogramName_mbb_delphes);
+  TH1* histogram_mbb_signal_delphes       = loadHistogram(inputFile_delphes, histogramName_mbb_signal_delphes);
+  TH1* histogram_mbb_background_delphes   = loadHistogram(inputFile_delphes, histogramName_mbb_background_delphes);
 
- std::string labelText_signal = "HH #rightarrow b#bar{b} WW^{*} #rightarrow b#bar{b} l^{+}#nu l^{-}#bar{#nu}";
+  std::string labelText_signal = "HH #rightarrow b#bar{b} WW^{*} #rightarrow b#bar{b} l^{+}#nu l^{-}#bar{#nu}";
   std::string labelText_background = "t#bar{t} #rightarrow bW #bar{b}W #rightarrow b l^{+}#nu #bar{b} l^{-}#bar{#nu}";
   //std::string labelText_signal_vs_background = Form("%s vs %s", labelText_signal.data(), labelText_background.data());
   std::string labelText_signal_vs_background = "";
@@ -244,9 +291,10 @@ void makePlotsForPaper_mbb()
 
   showHistograms(
     showHistograms_canvasSizeX, showHistograms_canvasSizeY,
-    histogram_mbb_unsmeared, "MC truth",
-    histogram_mbb_smeared, "E_{b} smearing",
-    histogram_mbb_delphes, "Delphes",
+    histogram_mbb_signal_unsmeared, "MC truth",
+    //histogram_mbb_signal_smeared, "E_{b} smearing",
+    histogram_mbb_signal_delphes, "Delphes",
+    nullptr, "",
     nullptr, "",
     showHistograms_colors, showHistograms_markerStyles, showHistograms_markerSizes, 
     showHistograms_lineStyles, showHistograms_lineWidths, showHistograms_drawOptions,
@@ -256,6 +304,13 @@ void makePlotsForPaper_mbb()
     "m_{bb} [GeV]", showHistograms_xAxisOffset,
     true, 3.1e-5, 1.9e0, "dN/dm_{bb} [1/GeV]", showHistograms_yAxisOffset, 
     Form("makePlotsForPaper_mbb.pdf"));
+
+  std::cout << "Signal efficiency and background rate for mass-window cut @ MC truth:" << std::endl;
+  dumpSignalEfficiency_and_BackgroundRate(histogram_mbb_signal_unsmeared, histogram_mbb_background_unsmeared);
+  std::cout << "Signal efficiency and background rate for mass-window cut @ E_{b} smearing:" << std::endl;
+  dumpSignalEfficiency_and_BackgroundRate(histogram_mbb_signal_smeared, histogram_mbb_background_smeared);
+  std::cout << "Signal efficiency and background rate for mass-window cut @ Delphes:" << std::endl;
+  dumpSignalEfficiency_and_BackgroundRate(histogram_mbb_signal_delphes, histogram_mbb_background_delphes);
 
   delete inputFile;
   delete inputFile_delphes;

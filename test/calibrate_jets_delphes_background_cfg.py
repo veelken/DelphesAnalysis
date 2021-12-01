@@ -13,7 +13,7 @@ process.fwliteOutput = cms.PSet(
     fileName = cms.string('')
 )
 
-process.analyze_hh_bb2l_delphes = cms.PSet(
+process.calibrate_jets_delphes = cms.PSet(
     treeName = cms.string('Events'),
 
     process = cms.string(''),
@@ -24,19 +24,17 @@ process.analyze_hh_bb2l_delphes = cms.PSet(
     branchName_electrons = cms.string('Electron'),
     branchName_muons = cms.string('Muon'),
     branchName_jets = cms.string('Jet'),
-    branchName_met = cms.string('MET'),
 
     branchName_genParticles = cms.string('GenPart'),
     branchName_genJets = cms.string('GenJet'),
-    branchName_genMEt = cms.string('GenMET'),
 
     isDEBUG = cms.bool(False)
 )
 
-process.fwliteOutput.fileName = cms.string('analyze_hh_bb2l_delphes_background.root')
+process.fwliteOutput.fileName = cms.string('calibrate_jets_delphes_background.root')
 
-process.analyze_hh_bb2l_delphes.process = cms.string('background')
-process.analyze_hh_bb2l_delphes.histogramDir = cms.string('background')
+process.calibrate_jets_delphes.process = cms.string('background')
+process.calibrate_jets_delphes.histogramDir = cms.string('background')
 
 inputFilePath = "/hdfs/local/karl/DelphesNtuples/2016/ttbar_DL_LO_PU40/0000/"
 

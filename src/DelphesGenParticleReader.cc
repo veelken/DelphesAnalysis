@@ -11,7 +11,7 @@ DelphesGenParticleReader::DelphesGenParticleReader()
 {}
 
 DelphesGenParticleReader::DelphesGenParticleReader(const std::string & branchName_obj)
-  : max_nGenParticles_(1024)
+  : max_nGenParticles_(2048)
   , branchName_num_(Form("n%s", branchName_obj.data()))
   , branchName_obj_(branchName_obj)
   , pt_(nullptr)

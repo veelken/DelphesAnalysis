@@ -31,6 +31,8 @@ process.analyze_hh_bbwwMEM_dilepton_delphes = cms.PSet(
 
     apply_genWeight = cms.bool(True),
 
+    apply_jetCalibration = cms.bool(True),
+
     branchName_electrons = cms.string('Electron'),
     branchName_muons = cms.string('Muon'),
     branchName_jets = cms.string('Jet'),

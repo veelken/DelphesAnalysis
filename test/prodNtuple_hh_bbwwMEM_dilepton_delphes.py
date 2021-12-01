@@ -5,7 +5,7 @@ from hhAnalysis.DelphesAnalysis.configs.prodNtupleConfig_hh_bbwwMEM_dilepton_del
 from tthAnalysis.HiggsToTauTau.jobTools import query_yes_no
 from tthAnalysis.HiggsToTauTau.runConfig import tthAnalyzeParser
 
-# E.g.: ./prodNtuple_hh_bbwwMEM_dilepton_delphes.py -e 2016 -v 2021Nov24
+# E.g.: ./prodNtuple_hh_bbwwMEM_dilepton_delphes.py -e 2016 -v 2021Nov29_wJetCalibration
 
 parser = tthAnalyzeParser()
 parser.add_use_home()

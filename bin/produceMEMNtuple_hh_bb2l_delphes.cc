@@ -27,6 +27,7 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesJetReader.h"                        // DelphesJetReader
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesJetCollectionSelector.h"            // DelphesJetCollectionSelector
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesJetCollectionCleaner.h"             // DelphesJetCollectionCleaner
+#include "hhAnalysis/DelphesAnalysis/interface/DelphesJetCalibration.h"                   // DelphesJetCalibration
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesMEt.h"                              // DelphesMEt
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesMEtReader.h"                        // DelphesMEtReader
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesEventInfo.h"                        // DelphesEventInfo
@@ -35,6 +36,7 @@
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesGenParticleReader.h"                // DelphesGenParticleReader
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesGenJet.h"                           // DelphesGenJet
 #include "hhAnalysis/DelphesAnalysis/interface/DelphesGenJetReader.h"                     // DelphesGenJetReader
+#include "hhAnalysis/DelphesAnalysis/interface/delphesAuxFunctions.h"                     // isHigherPt, mergeLeptonCollections, isBetterBJet
 
 #include "tthAnalysis/HiggsToTauTau/interface/TTreeWrapper.h"                             // TTreeWrapper
 #include "tthAnalysis/HiggsToTauTau/interface/histogramAuxFunctions.h"                    // fillWithOverFlow
@@ -59,41 +61,6 @@
 #include <fstream>  // std::ofstream
 #include <assert.h> // assert
 #include <math.h>   // sqrt 
-
-template <typename T>
-bool
-isHigherPt(const T * particle1,
-           const T * particle2)
-{
-  return particle1->pt() > particle2->pt();
-}
-
-std::vector<const DelphesLepton *>
-mergeLeptonCollections(const std::vector<const DelphesLepton *> & electrons,
-                       const std::vector<const DelphesLepton *> & muons,
-                       bool (*sortFunction)(const DelphesLepton *, const DelphesLepton *))
-{
-  std::vector<const DelphesLepton *> leptons;
-  const std::size_t numLeptons = electrons.size() + muons.size();
-  if ( numLeptons > 0 )
-  {
-    leptons.reserve(numLeptons);
-    leptons.insert(leptons.end(), electrons.begin(), electrons.end());
-    leptons.insert(leptons.end(), muons.begin(), muons.end());
-    std::sort(leptons.begin(), leptons.end(), sortFunction);
-  }
-  return leptons;
-}
-
-bool 
-isBetterBJet(const DelphesJet * jet1, const DelphesJet * jet2)
-{
-  // CV: select jets passing b-tag discriminator first,
-  //     then select jets by higher pT
-  if ( jet1->btag() > jet2->btag() ) return true;
-  if ( jet1->btag() < jet2->btag() ) return false;
-  return jet1->pt() > jet2->pt();
-}
 
 /**
  * @brief Produce MEM Ntuple for HH signal and TT background events simulated with Delphes in HH->bbWW dilepton channel
@@ -145,6 +112,8 @@ int main(int argc, char* argv[])
 
   bool apply_genWeight = cfg_analyze.getParameter<bool>("apply_genWeight");
 
+  bool apply_jetCalibration = cfg_analyze.getParameter<bool>("apply_jetCalibration");
+
   bool isDEBUG = cfg_analyze.getParameter<bool>("isDEBUG");
   std::cout << " isDEBUG = " << isDEBUG << std::endl;
 
@@ -188,6 +157,7 @@ int main(int argc, char* argv[])
   inputTree->registerReader(jetReader);
   DelphesJetCollectionCleaner jetCleaner_dR04(0.4, isDEBUG);
   DelphesJetCollectionSelector jetSelector(Era::kUndefined, -1, isDEBUG);
+  DelphesJetCalibration jetCalibration;
 
   DelphesMEtReader* metReader = new DelphesMEtReader(branchName_met);
   inputTree->registerReader(metReader);
@@ -466,11 +436,23 @@ int main(int argc, char* argv[])
     mem::MeasuredParticle memMeasuredLepton_sublead(memLeptonType_sublead, 
       selLepton_sublead->pt(), selLepton_sublead->eta(), selLepton_sublead->phi(), 
       memLeptonMass_sublead, selLepton_sublead->charge());
+    double selJet1Pt = selJet1->pt();
+    if ( apply_jetCalibration )
+    {
+      DelphesJet selJet1_calibrated = jetCalibration(*selJet1);
+      selJet1Pt = selJet1_calibrated.pt();
+    }
     mem::MeasuredParticle memMeasuredBJet1(mem::MeasuredParticle::kBJet,
-      selJet1->pt(), selJet1->eta(), selJet1->phi(), 
+      selJet1Pt, selJet1->eta(), selJet1->phi(), 
       mem::bottomQuarkMass);
+    double selJet2Pt = selJet2->pt();
+    if ( apply_jetCalibration )
+    {
+      DelphesJet selJet2_calibrated = jetCalibration(*selJet2);
+      selJet2Pt = selJet2_calibrated.pt();
+    }
     mem::MeasuredParticle memMeasuredBJet2(mem::MeasuredParticle::kBJet,
-      selJet2->pt(), selJet2->eta(), selJet2->phi(), 
+      selJet2Pt, selJet2->eta(), selJet2->phi(), 
       mem::bottomQuarkMass);
 
     std::vector<mem::MeasuredParticle> memMeasuredParticles;
@@ -512,10 +494,12 @@ int main(int argc, char* argv[])
       memMeasuredParticles_missingBJet.push_back(memMeasuredBJet1);
       memMeasuredBJet_missingBJet = &memMeasuredBJet1;
       selJet_isFake_missingBJet = selJet1_isFake;
+      if ( selJet1->btag() >= 1 ) ++numBJets_missingBJet;
     } else if ( selJetIdx_missingBJet == kSecond ) {
       memMeasuredParticles_missingBJet.push_back(memMeasuredBJet2);
       memMeasuredBJet_missingBJet = &memMeasuredBJet2;
       selJet_isFake_missingBJet = selJet2_isFake;
+      if ( selJet2->btag() >= 1 ) ++numBJets_missingBJet;
     } else assert(0);
     int numGenBJets_missingBJet = 0;
     if ( !selJet_isFake_missingBJet ) ++numGenBJets_missingBJet;
