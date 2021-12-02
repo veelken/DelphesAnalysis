@@ -1594,15 +1594,15 @@ void makeMEMPerformancePlotsFromNtuples_bbww_dilepton_delphes()
 
   delete inputFile;
 
-  TFile* outputFile_mbb = new TFile("histogramsForPaper_delphes.root", "RECREATE");
-  outputFile_mbb->cd();
+  TFile* outputFile_mbb_delphes = new TFile("histogramsForPaper_delphes_mbb.root", "RECREATE");
+  outputFile_mbb_delphes->cd();
   TH1* histogram_2genuineBJets_signal_mbb = histograms[-1][2][kDisabled][kSignal_lo][kMbb];
   histogram_2genuineBJets_signal_mbb->SetName("signal_lo_mbb_delphes");
   histogram_2genuineBJets_signal_mbb->Write();
   TH1* histogram_2genuineBJets_background_mbb = histograms[-1][2][kDisabled][kBackground_lo][kMbb];
   histogram_2genuineBJets_background_mbb->SetName("background_lo_mbb_delphes");
   histogram_2genuineBJets_background_mbb->Write();
-  delete outputFile_mbb;
+  delete outputFile_mbb_delphes;
 
 //return;
 
@@ -2267,6 +2267,27 @@ void makeMEMPerformancePlotsFromNtuples_bbww_dilepton_delphes()
       }
     }
   }
+
+  TFile* outputFile_delphes = new TFile("histogramsForPaper_delphes.root", "RECREATE");
+  outputFile_delphes->cd();
+  for ( int idxHistogram = kProbS; idxHistogram <= kMll; ++idxHistogram ) {
+    std::string histogramName = getHistogramName(idxHistogram);
+    TH1* histogram_signal = histograms[2][-1][kDisabled][kSignal_lo][idxHistogram];
+    histogram_signal->SetName(Form("signal_lo_%s_delphes", histogramName.data()));
+    histogram_signal->Write();
+    TH1* histogram_background = histograms[2][-1][kDisabled][kBackground_lo][idxHistogram];
+    histogram_background->SetName(Form("background_lo_%s_delphes", histogramName.data()));
+    histogram_background->Write();
+    if ( idxHistogram == kLR ) {
+      TH1* histogram_signal_memLR_finebin = histograms_memLR_finebin[2][-1][kDisabled][kSignal_lo];
+      histogram_signal_memLR_finebin->SetName("signal_lo_memLR_finebin_delphes");
+      histogram_signal_memLR_finebin->Write();
+      TH1* histogram_background_memLR_finebin = histograms_memLR_finebin[2][-1][kDisabled][kBackground_lo];
+      histogram_background_memLR_finebin->SetName("background_lo_memLR_finebin_delphes");
+      histogram_background_memLR_finebin->Write();
+    }
+  }
+  delete outputFile_delphes;
 
   clock.Show("makeMEMPerformancePlotsFromNtuples_bbww_dilepton_delphes");
 }
